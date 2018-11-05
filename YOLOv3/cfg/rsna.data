@@ -1,0 +1,6 @@
+classes= 2
+                    train  = /media/learningai/7C22214D22210E28/kaggleData/RSNA/source/YoLo/darknet/rsnadata/metadata_2/tr_list2.txt
+                    valid  = /media/learningai/7C22214D22210E28/kaggleData/RSNA/source/YoLo/darknet/rsnadata/metadata_2/val_list2.txt
+                    names  = /media/learningai/7C22214D22210E28/kaggleData/RSNA/source/YoLo/darknet/cfg/rsna.names
+                    backup = /media/learningai/7C22214D22210E28/kaggleData/RSNA/source/YoLo/darknet/backup
+        
