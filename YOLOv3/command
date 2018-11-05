@@ -2,7 +2,7 @@
 
 
 # Build gpu version darknet
-!cd darknet && sed '1 s/^.*$/GPU=1/; 2 s/^.*$/CUDNN=1/' -i Makefile
+cd darknet && sed '1 s/^.*$/GPU=1/; 2 s/^.*$/CUDNN=1/' -i Makefile
 
 export LD_LIBRARY_PATH=/usr/local/cuda/lib
 
@@ -11,5 +11,5 @@ export PATH=$PATH:/usr/local/cuda/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
 
 # -j <The # of cpu cores to use>. Chang 999 to fit your environment. Actually i used '-j 50'.
-!cd darknet && make -j 999 -s
-!cp darknet/darknet darknet_gpu
+cd darknet && make -j 999 -s
+cp darknet darknet_gpu
