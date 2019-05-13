@@ -438,6 +438,52 @@ def se_resnext101_32x4d(num_classes=1000, inchannels=1,pretrained='imagenet'):
         initialize_pretrained_model(model, num_classes, settings)
     return model
 
+class GCN_bottleneck(nn.Module):
+    def __init__(self, inplanes, planes, k, downsample = None):
+        super(GCN_bottleneck, self).__init__()
+        self.expansion = 4
+        
+        self.conv_l1 = nn.Conv2d(inplanes, planes, kernel_size=(k,1), padding =((k-1)/2,0))
+        self.bn_l1 = nn.BatchNorm2d(planes)
+        self.conv_l2 = nn.Conv2d(planes, planes, kernel_size=(1,k), padding =(0,(k-1)/2))
+        self.bn_l2 = nn.BatchNorm2d(planes)
+        self.conv_r1 = nn.Conv2d(inplanes, planes, kernel_size=(1,k), padding =((k-1)/2,0))
+        self.bn_r1 = nn.BatchNorm2d(planes)
+        self.conv_r2 = nn.Conv2d(planes, planes, kernel_size=(k,1), padding =(0,(k-1)/2))
+        self.bn_r2 = nn.BatchNorm2d(planes)
+        self.conv_all = nn.Conv2d(planes, planes * self.expansion, kernel_size=1, padding=0)
+        self.bn_all = nn.BatchNorm2d(planes * self.expansion)
+        self.relu = nn.ReLU(inplace=True)
+        self.downsample = downsample
+        
+        
+    def forward(self,x):
+        identity = x
+        
+        out_l = self.conv_l1(x)
+        out_l = self.bn_l1(out_l)
+        out_l = self.relu(out_l)
+        out_l = self.conv_l2(out_l)
+        out_l = self.bn_l2(out_l)
+        out_l = self.relu(out_l)
+        
+        out_r = self.conv_r1(x)
+        out_r = self.bn_r1(out_r)
+        out_r = self.relu(out_r)
+        out_r = self.conv_r2(out_r)
+        out_r = self.bn_r2(out_r)
+        out_r = self.relu(out_r)
+        
+        out = out_l + out_r
+        out = self.conv_all(out)
+        out = self.bn_all(out)
+        
+        if self.downsample is not None:
+            identity = self.downsample(x)
+        
+        out = identity + out
+        
+        return out
 
 if __name__ == '__main__':
     # cudnn.benchmark = True # This will make network slow ??
