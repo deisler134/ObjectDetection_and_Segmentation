@@ -119,6 +119,63 @@ def sigmoid_loss(results, labels, topk=10):
     nonew_loss = nn.BCEWithLogitsLoss(reduce=True)(results_nonew, target_nonew)
     return nonew_loss + error_loss + lovasz_loss * 0.5
 
+
+def class_balanced_cross_entropy_loss(results, label, size_average=True, batch_average=True):
+    """Define the class balanced cross entropy loss to train the network
+    Args:
+    output: Output of the network
+    label: Ground truth label
+    Returns:
+    Tensor that evaluates the loss
+    """
+
+    labels = torch.ge(label, 0.5).float()
+
+    num_labels_pos = torch.sum(labels)
+    num_labels_neg = torch.sum(1.0 - labels)
+    num_total = num_labels_pos + num_labels_neg
+
+    output_gt_zero = torch.ge(results, 0).float()
+    loss_val = torch.mul(results, (labels - output_gt_zero)) - torch.log(
+        1 + torch.exp(results - 2 * torch.mul(results, output_gt_zero)))
+
+    loss_pos = torch.sum(-torch.mul(labels, loss_val))
+    loss_neg = torch.sum(-torch.mul(1.0 - labels, loss_val))
+
+    final_loss = num_labels_neg / num_total * loss_pos + num_labels_pos / num_total * loss_neg
+
+    if size_average:
+        final_loss /= np.prod(label.size())
+    elif batch_average:
+        final_loss /= label.size()[0]
+
+    return final_loss
+
+
+def class_balanced_cross_entropy_loss_theoretical(results, label):
+    """Theoretical version of the class balanced cross entropy loss to train the network (Produces unstable results)
+    Args:
+    output: Output of the network
+    label: Ground truth label
+    Returns:
+    Tensor that evaluates the loss
+    """
+    results = torch.sigmoid(results)
+
+    labels_pos = torch.gt(results,0).float()
+    labels_neg = torch.lt(results,1).float()
+
+    num_labels_pos = torch.sum(labels_pos)
+    num_labels_neg = torch.sum(labels_neg)
+    num_total = num_labels_pos + num_labels_neg
+
+    loss_pos = torch.sum(torch.mul(labels_pos, torch.log(results + 0.00001)))
+    loss_neg = torch.sum(torch.mul(labels_neg, torch.log(1 - results + 0.00001)))
+
+    final_loss = -num_labels_neg / num_total * loss_pos - num_labels_pos / num_total * loss_neg
+
+    return final_loss
+
 if __name__ == '__main__':
     results = torch.randn((4, 5004)).cuda()
     targets = torch.from_numpy(np.array([1,2,3,5004])).cuda()
