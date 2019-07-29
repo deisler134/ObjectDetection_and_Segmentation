@@ -120,39 +120,39 @@ def sigmoid_loss(results, labels, topk=10):
     return nonew_loss + error_loss + lovasz_loss * 0.5
 
 
-def class_balanced_cross_entropy_loss(results, label, size_average=True, batch_average=True):
+def class_balanced_cross_entropy_loss(results, labels, size_average=True, batch_average=True):
     """Define the class balanced cross entropy loss to train the network
     Args:
     output: Output of the network
-    label: Ground truth label
+    labels: Ground truth labels
     Returns:
     Tensor that evaluates the loss
     """
 
-    labels = torch.ge(label, 0.5).float()
+    label = torch.ge(labels, 0.5).float()
 
-    num_labels_pos = torch.sum(labels)
-    num_labels_neg = torch.sum(1.0 - labels)
+    num_labels_pos = torch.sum(label)
+    num_labels_neg = torch.sum(1.0 - label)
     num_total = num_labels_pos + num_labels_neg
 
     output_gt_zero = torch.ge(results, 0).float()
-    loss_val = torch.mul(results, (labels - output_gt_zero)) - torch.log(
+    loss_val = torch.mul(results, (label - output_gt_zero)) - torch.log(
         1 + torch.exp(results - 2 * torch.mul(results, output_gt_zero)))
 
-    loss_pos = torch.sum(-torch.mul(labels, loss_val))
-    loss_neg = torch.sum(-torch.mul(1.0 - labels, loss_val))
+    loss_pos = torch.sum(-torch.mul(label, loss_val))
+    loss_neg = torch.sum(-torch.mul(1.0 - label, loss_val))
 
     final_loss = num_labels_neg / num_total * loss_pos + num_labels_pos / num_total * loss_neg
 
     if size_average:
-        final_loss /= np.prod(label.size())
+        final_loss /= np.prod(labels.size())
     elif batch_average:
-        final_loss /= label.size()[0]
+        final_loss /= labels.size()[0]
 
     return final_loss
 
 
-def class_balanced_cross_entropy_loss_theoretical(results, label):
+def class_balanced_cross_entropy_loss_theoretical(results, labels):
     """Theoretical version of the class balanced cross entropy loss to train the network (Produces unstable results)
     Args:
     output: Output of the network
@@ -162,8 +162,8 @@ def class_balanced_cross_entropy_loss_theoretical(results, label):
     """
     results = torch.sigmoid(results)
 
-    labels_pos = torch.gt(results,0).float()
-    labels_neg = torch.lt(results,1).float()
+    labels_pos = torch.gt(labels,0).float()
+    labels_neg = torch.lt(labels,1).float()
 
     num_labels_pos = torch.sum(labels_pos)
     num_labels_neg = torch.sum(labels_neg)
